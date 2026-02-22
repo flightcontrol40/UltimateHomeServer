@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: qbittorrent
-  namespace: default
+  namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: qbittorrent
 spec:
@@ -19,7 +19,37 @@ spec:
       labels:
         app.kubernetes.io/name: qbittorrent
     spec:
+    
       containers:
+        - name: gluetun
+          image: ghcr.io/qdm12/gluetun # Optionally you can use the "qmcgaw/gluetun" image as well as specify what version of Gluetun you desire
+          imagePullPolicy: Always
+          securityContext:
+            capabilities:
+              add: ["NET_ADMIN"]
+           # Adapt the following environment variables to suit your needs and VPN provider
+          env:
+            - name: TZ
+              value: "{{ .Values.common.tz }}"
+            - name: VPN_SERVICE_PROVIDER
+              value: "mullvad"
+            - name: VPN_TYPE
+              value: "wireguard"
+            - name: WIREGUARD_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gluetun-secrets
+                  key: wireguard_private_key
+            - name: WIREGUARD_ADDRESSES
+              valueFrom:
+                secretKeyRef:
+                  name: gluetun-secrets
+                  key: wireguard_addresses
+          lifecycle:
+            postStart:
+              exec:
+                command: ["/bin/sh", "-c", "(ip rule del table 51820; ip -6 rule del table 51820) || true"]
+    
         - name: qbittorrent
           image: "{{ .Values.services.qbittorrent.image.repository }}:{{ .Values.services.qbittorrent.image.tag }}"
           imagePullPolicy: {{ .Values.services.qbittorrent.image.pullPolicy }}

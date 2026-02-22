@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-helm upgrade -f values.yaml -f secrets.yaml  "$1" .
+helm upgrade -f values.yaml -f secrets.yaml  "$1" . -n mediastack

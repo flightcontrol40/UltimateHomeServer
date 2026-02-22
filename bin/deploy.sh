@@ -8,4 +8,4 @@ if [[ ! ${response,,} =~ ^y(es)?$ ]]; then
     exit 0
 fi
 
-helm install "$1" ./ -f values.yaml -f secrets.yaml
+helm install "$1" ./ -f values.yaml -f secrets.yaml -n mediastack

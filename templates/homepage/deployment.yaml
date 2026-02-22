@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: homepage
-  namespace: default
+  namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: homepage
 spec:
@@ -25,20 +25,13 @@ spec:
       automountServiceAccountToken: true
       dnsPolicy: ClusterFirst
       enableServiceLinks: true
-      initContainers:
-        - name: init-config
-          image: busybox
-          command: ["sh", "-c", "cp /homepage-config/* /config-working-dir/"]
-          volumeMounts:
-            - name: homepage-config
-              mountPath: /homepage-config
-            - name: config-working-dir
-              mountPath: /config-working-dir
       containers:
         - image: "{{ .Values.services.homepage.image.repository }}:{{ .Values.services.homepage.image.tag }}"
           imagePullPolicy: {{ .Values.services.homepage.image.pullPolicy }}
           name: homepage
           env:
+            - name: HOMEPAGE_ALLOWED_HOSTS
+              value: homepage.supersussywebsite.com # required, may need port. See gethomepage.dev/installation/#homepage_allowed_hosts
             - name: TZ
               value: "{{ .Values.common.tz }}"
           ports:
@@ -46,16 +39,36 @@ spec:
               containerPort: {{ .Values.services.homepage.ports.http }}
               protocol: TCP
           volumeMounts:
-            - name: config-working-dir
-              mountPath: /app/config
-            - name: logs
-              mountPath: /app/config/logs
+            - mountPath: /app/config/custom.js
+              name: homepage-config
+              subPath: custom.js
+            - mountPath: /app/config/custom.css
+              name: homepage-config
+              subPath: custom.css
+            - mountPath: /app/config/bookmarks.yaml
+              name: homepage-config
+              subPath: bookmarks.yaml
+            - mountPath: /app/config/docker.yaml
+              name: homepage-config
+              subPath: docker.yaml
+            - mountPath: /app/config/kubernetes.yaml
+              name: homepage-config
+              subPath: kubernetes.yaml
+            - mountPath: /app/config/services.yaml
+              name: homepage-config
+              subPath: services.yaml
+            - mountPath: /app/config/settings.yaml
+              name: homepage-config
+              subPath: settings.yaml
+            - mountPath: /app/config/widgets.yaml
+              name: homepage-config
+              subPath: widgets.yaml
+            - mountPath: /app/config/logs
+              name: logs
       volumes:
         - name: homepage-config
           configMap:
             name: homepage
         - name: logs
-          emptyDir: {}
-        - name: config-working-dir
           emptyDir: {}
 {{- end}}

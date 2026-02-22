@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: plex
-  namespace: default
+  namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: plex
 spec:
@@ -30,6 +30,11 @@ spec:
               value: "1000"
             - name: TZ
               value: "{{ .Values.common.tz }}"
+            - name: PLEX_CLAIM
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.services.plex.secretName }}
+                  key: {{ .Values.services.plex.secretKey }}
           ports:
             - name: http
               containerPort: {{ .Values.services.plex.ports.http }}
