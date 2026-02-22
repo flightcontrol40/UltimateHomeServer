@@ -1,0 +1,47 @@
+{{- if .Values.services.configarr.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: configarr
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: configarr
+spec:
+  schedule: {{ .Values.services.configarr.schedule | quote }}
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: configarr
+        spec:
+          containers:
+            - name: configarr
+              image: "{{ .Values.services.configarr.image.repository }}:{{ .Values.services.configarr.image.tag }}"
+              imagePullPolicy: {{ .Values.services.configarr.image.pullPolicy }}
+              tty: true
+              envFrom:
+                - secretRef:
+                    name: configarr-env
+              volumeMounts:
+                - name: app-data
+                  mountPath: /app/repos
+                  subPath: configarr-repos
+                - name: config-volume
+                  mountPath: /app/config/config.yml
+                  subPath: config.yml
+          volumes:
+            - name: app-data
+              {{- if .Values.storage.nfs.enabled }}
+              persistentVolumeClaim:
+                claimName: media-config-pvc
+              {{- else }}
+              emptyDir: {}
+              {{- end }}
+            - name: config-volume
+              configMap:
+                name: configarr
+          restartPolicy: Never
+{{- end }}

@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: jellyfin
-  namespace: default
+  namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: jellyfin
 spec:
@@ -42,15 +42,26 @@ spec:
           volumeMounts:
             - name: jellyfin-config
               mountPath: /config
+              subPath: jellyfin
             - name: library
               mountPath: /library
       volumes:
         - name: jellyfin-config
+          {{- if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-config-pvc
+          {{- else }}
           hostPath:
             path: "{{ .Values.services.jellyfin.config }}"
             type: Directory
+          {{- end }}
         - name: library
+          {{- if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-library-pvc
+          {{- else }}
           hostPath:
             path: "{{ .Values.services.jellyfin.library }}"
             type: Directory
+          {{- end }}
 {{- end }}

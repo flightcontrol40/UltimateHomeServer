@@ -1,0 +1,47 @@
+{{- if .Values.storage.nfs.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: media-config-pvc
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: media-storage
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-media-config
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: media-data-pvc
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: media-storage
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-media-data
+  resources:
+    requests:
+      storage: 1Ti
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: media-library-pvc
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: media-storage
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-media-library
+  resources:
+    requests:
+      storage: 10Ti
+{{- end }}

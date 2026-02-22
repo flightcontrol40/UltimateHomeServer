@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: gotify
-  namespace: default
+  namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: gotify
 spec:
@@ -37,10 +37,16 @@ spec:
           volumeMounts:
             - name: gotify-data
               mountPath: /app/data
+              subPath: gotify
 
       volumes:
         - name: gotify-data
+          {{- if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-data-pvc
+          {{- else }}
           hostPath:
             path: "{{ .Values.services.gotify.data }}"
             type: Directory
+          {{- end }}
 {{- end }}

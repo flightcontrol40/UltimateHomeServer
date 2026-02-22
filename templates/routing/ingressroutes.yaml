@@ -1,0 +1,102 @@
+{{- if .Values.routing.enabled }}
+{{- $root := . }}
+{{- $routing := .Values.routing }}
+
+{{- /* Define service routing configs - name, port, enabled flag, subdomain override */}}
+{{- $services := dict 
+    "apprise" (dict "port" .Values.services.apprise.ports.http "enabled" .Values.services.apprise.enabled)
+    "autobrr" (dict "port" .Values.services.autobrr.ports.http "enabled" .Values.services.autobrr.enabled)
+    "authentik" (dict "port" .Values.services.authentik.ports.http "enabled" .Values.services.authentik.enabled "subdomain" "auth")
+    "changedetectionio" (dict "port" .Values.services.changedetectionio.ports.http "enabled" .Values.services.changedetectionio.enabled "subdomain" "changedetection")
+    "gotify" (dict "port" .Values.services.gotify.ports.http "enabled" .Values.services.gotify.enabled)
+    "homepage" (dict "port" .Values.services.homepage.ports.http "enabled" .Values.services.homepage.enabled)
+    "huginn" (dict "port" .Values.services.huginn.ports.http "enabled" .Values.services.huginn.enabled)
+    "jellyfin" (dict "port" .Values.services.jellyfin.ports.http "enabled" .Values.services.jellyfin.enabled)
+    "kavita" (dict "port" .Values.services.kavita.ports.http "enabled" .Values.services.kavita.enabled)
+    "overseerr" (dict "port" .Values.services.overseerr.ports.http "enabled" .Values.services.overseerr.enabled)
+    "plex" (dict "port" .Values.services.plex.ports.http "enabled" .Values.services.plex.enabled)
+    "prowlarr" (dict "port" .Values.services.prowlarr.ports.http "enabled" .Values.services.prowlarr.enabled)
+    "qbittorrent" (dict "port" .Values.services.qbittorrent.ports.http "enabled" .Values.services.qbittorrent.enabled)
+    "radarr" (dict "port" .Values.services.radarr.ports.http "enabled" .Values.services.radarr.enabled)
+    "sabnzbd" (dict "port" .Values.services.sabnzbd.ports.http "enabled" .Values.services.sabnzbd.enabled)
+    "sonarr" (dict "port" .Values.services.sonarr.ports.http "enabled" .Values.services.sonarr.enabled)
+    "tautulli" (dict "port" .Values.services.tautulli.ports.http "enabled" .Values.services.tautulli.enabled)
+    "thelounge" (dict "port" .Values.services.thelounge.ports.http "enabled" .Values.services.thelounge.enabled)
+    "debridClient" (dict "port" .Values.services.debridClient.ports.http "enabled" .Values.services.debridClient.enabled "serviceName" "debrid-client" "subdomain" "debrid")
+}}
+
+{{- range $name, $config := $services }}
+{{- if $config.enabled }}
+{{- $serviceName := default $name $config.serviceName }}
+{{- $subdomain := default $name $config.subdomain }}
+{{- $pathPrefix := "" }}
+{{- $customMiddlewares := list }}
+
+{{- /* Check for service-specific overrides */}}
+{{- if $routing.serviceOverrides }}
+{{- $override := index $routing.serviceOverrides $name }}
+{{- if $override }}
+{{- if $override.subdomain }}
+{{- $subdomain = $override.subdomain }}
+{{- end }}
+{{- if $override.pathPrefix }}
+{{- $pathPrefix = $override.pathPrefix }}
+{{- end }}
+{{- if $override.middlewares }}
+{{- $customMiddlewares = $override.middlewares }}
+{{- end }}
+{{- end }}
+{{- end }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ $serviceName }}-route
+  namespace: {{ $root.Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ $serviceName }}
+    app.kubernetes.io/managed-by: {{ $root.Release.Service }}
+spec:
+  entryPoints:
+    {{- range $routing.entryPoints }}
+    - {{ . }}
+    {{- end }}
+  routes:
+    {{- if $pathPrefix }}
+    - match: Host(`{{ $routing.domain }}`) && PathPrefix(`{{ $pathPrefix }}`)
+    {{- else }}
+    - match: Host(`{{ $subdomain }}.{{ $routing.domain }}`)
+    {{- end }}
+      kind: Rule
+      services:
+        - name: {{ $serviceName }}
+          port: {{ $config.port }}
+      {{- if or $routing.middlewares $customMiddlewares }}
+      middlewares:
+        {{- range $routing.middlewares }}
+        - name: {{ .name }}
+          {{- if .namespace }}
+          namespace: {{ .namespace }}
+          {{- end }}
+        {{- end }}
+        {{- range $customMiddlewares }}
+        - name: {{ .name }}
+          {{- if .namespace }}
+          namespace: {{ .namespace }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+  {{- if and $routing.tls.enabled (or $routing.tls.certResolver $routing.tls.secretName) }}
+  tls:
+    {{- if $routing.tls.certResolver }}
+    certResolver: {{ $routing.tls.certResolver }}
+    {{- end }}
+    {{- if $routing.tls.secretName }}
+    secretName: {{ $routing.tls.secretName }}
+    {{- end }}
+  {{- else if $routing.tls.enabled }}
+  tls: {}
+  {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

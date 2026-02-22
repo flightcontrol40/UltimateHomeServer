@@ -4,7 +4,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: autobrr
-  namespace: default
+  namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: autobrr
 spec:
@@ -38,10 +38,16 @@ spec:
           volumeMounts:
             - name: autobrr-config
               mountPath: /config
+              subPath: autobrr
 
       volumes:
         - name: autobrr-config
+          {{- if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-config-pvc
+          {{- else }}
           hostPath:
             path: "{{ .Values.services.autobrr.config }}"
             type: Directory
+          {{- end }}
 {{- end }}

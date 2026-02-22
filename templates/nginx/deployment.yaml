@@ -60,6 +60,9 @@ spec:
             - name: public
               readOnly: true
               mountPath: {{ .Values.services.nginx.public_path }}
+              {{- if .Values.storage.nfs.enabled }}
+              subPath: nginx/public
+              {{- end }}
           livenessProbe:
             exec:
               command:
@@ -78,6 +81,11 @@ spec:
           hostPath:
             path: /etc/letsencrypt
         - name: public
+          {{- if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-data-pvc
+          {{- else }}
           hostPath:
             path: {{ .Values.services.nginx.public_path }}
+          {{- end }}
 {{- end }}

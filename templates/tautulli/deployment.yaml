@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tautulli
-  namespace: default
+  namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: tautulli
 spec:
@@ -37,9 +37,15 @@ spec:
           volumeMounts:
             - name: tautulli-config
               mountPath: /config
+              subPath: tautulli
       volumes:
         - name: tautulli-config
+          {{- if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-config-pvc
+          {{- else }}
           hostPath:
             path: "{{ .Values.services.tautulli.config }}"
             type: Directory
+          {{- end }}
 {{- end }}

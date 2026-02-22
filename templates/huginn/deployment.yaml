@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: huginn
-  namespace: default
+  namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: huginn
 spec:
@@ -37,9 +37,15 @@ spec:
           volumeMounts:
             - name: huginn-data
               mountPath: /var/lib/mysql
+              subPath: huginn
       volumes:
         - name: huginn-data
+          {{- if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-data-pvc
+          {{- else }}
           hostPath:
             path: "{{ .Values.services.huginn.data }}"
             type: Directory
+          {{- end }}
 {{- end }}

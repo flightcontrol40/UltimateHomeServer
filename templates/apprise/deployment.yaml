@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: apprise
-  namespace: default
+  namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: apprise
 spec:
@@ -37,10 +37,16 @@ spec:
           volumeMounts:
             - name: apprise-config
               mountPath: /config
+              subPath: apprise
 
       volumes:
         - name: apprise-config
+          {{- if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-config-pvc
+          {{- else }}
           hostPath:
             path: "{{ .Values.services.apprise.config }}"
             type: Directory
+          {{- end }}
 {{- end }}

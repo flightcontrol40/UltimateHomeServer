@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: plex
-  namespace: default
+  namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: plex
 spec:
@@ -19,6 +19,7 @@ spec:
       labels:
         app.kubernetes.io/name: plex
     spec:
+      initContainers:
       containers:
         - name: plex
           image: "{{ .Values.services.plex.image.repository }}:{{ .Values.services.plex.image.tag }}"
@@ -30,6 +31,8 @@ spec:
               value: "1000"
             - name: TZ
               value: "{{ .Values.common.tz }}"
+            - name: PLEX_CLAIM
+              value: "{{ .Values.services.plex.plexClaim }}"
           ports:
             - name: http
               containerPort: {{ .Values.services.plex.ports.http }}
@@ -37,15 +40,31 @@ spec:
           volumeMounts:
             - name: plex-config
               mountPath: /config
+              {{- if not .Values.services.plex.localStorage.enabled }}
+              subPath: plex
+              {{- end }}
             - name: library
               mountPath: /library
       volumes:
         - name: plex-config
+          {{- if .Values.services.plex.localStorage.enabled }}
+          persistentVolumeClaim:
+            claimName: plex-config-local-pvc
+          {{- else if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-config-pvc
+          {{- else }}
           hostPath:
             path: "{{ .Values.services.plex.config }}"
             type: Directory
+          {{- end }}
         - name: library
+          {{- if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-library-pvc
+          {{- else }}
           hostPath:
             path: "{{ .Values.services.plex.library }}"
             type: Directory
+          {{- end }}
 {{- end }}

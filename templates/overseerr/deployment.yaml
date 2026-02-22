@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: overseerr
-  namespace: default
+  namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: overseerr
 spec:
@@ -36,10 +36,16 @@ spec:
               protocol: TCP
           volumeMounts:
             - name: overseerr-config
-              mountPath: /config
+              mountPath: /app/config
+              subPath: overseerr
       volumes:
         - name: overseerr-config
+          {{- if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-config-pvc
+          {{- else }}
           hostPath:
             path: "{{ .Values.services.overseerr.config }}"
             type: Directory
+          {{- end }}
 {{- end}}

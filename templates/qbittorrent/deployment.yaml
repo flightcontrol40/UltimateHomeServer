@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: qbittorrent
-  namespace: default
+  namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: qbittorrent
 spec:
@@ -45,15 +45,26 @@ spec:
           volumeMounts:
             - name: qbittorrent-config
               mountPath: /config
+              subPath: qbittorrent
             - name: data
               mountPath: /data
       volumes:
         - name: qbittorrent-config
+          {{- if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-config-pvc
+          {{- else }}
           hostPath:
             path: "{{ .Values.services.qbittorrent.config }}"
             type: Directory
+          {{- end }}
         - name: data
+          {{- if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-data-pvc
+          {{- else }}
           hostPath:
             path: "{{ .Values.services.qbittorrent.data }}"
             type: Directory
+          {{- end }}
 {{- end }}

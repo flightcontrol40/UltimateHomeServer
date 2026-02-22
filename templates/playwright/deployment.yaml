@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: playwright
-  namespace: default
+  namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: playwright
 spec:
@@ -41,10 +41,16 @@ spec:
           volumeMounts:
             - name: playwright-config
               mountPath: /config
+              subPath: playwright
 
       volumes:
         - name: playwright-config
+          {{- if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-config-pvc
+          {{- else }}
           hostPath:
             path: "{{ .Values.services.playwright.config }}"
             type: Directory
+          {{- end }}
 {{- end }}

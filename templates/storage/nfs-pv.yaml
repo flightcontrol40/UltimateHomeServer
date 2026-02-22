@@ -1,0 +1,59 @@
+{{- if .Values.storage.nfs.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: media-nfs-config
+  labels:
+    app.kubernetes.io/name: media-storage
+    type: nfs
+spec:
+  capacity:
+    storage: 100Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-config
+  nfs:
+    server: {{ .Values.storage.nfs.server }}
+    path: "{{ .Values.storage.nfs.basePath }}{{ .Values.storage.nfs.paths.config }}"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: media-nfs-data
+  labels:
+    app.kubernetes.io/name: media-storage
+    type: nfs
+spec:
+  capacity:
+    storage: 1Ti
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-data
+  nfs:
+    server: {{ .Values.storage.nfs.server }}
+    path: "{{ .Values.storage.nfs.basePath }}{{ .Values.storage.nfs.paths.data }}"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: media-nfs-library
+  labels:
+    app.kubernetes.io/name: media-storage
+    type: nfs
+spec:
+  capacity:
+    storage: 10Ti
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media-library
+  nfs:
+    server: {{ .Values.storage.nfs.server }}
+    path: "{{ .Values.storage.nfs.basePath }}{{ .Values.storage.nfs.paths.library }}"
+{{- end }}

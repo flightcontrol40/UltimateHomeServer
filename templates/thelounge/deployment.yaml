@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: thelounge
-  namespace: default
+  namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: thelounge
 spec:
@@ -37,10 +37,16 @@ spec:
           volumeMounts:
             - name: thelounge-config
               mountPath: /var/opt/thelounge
+              subPath: thelounge
 
       volumes:
         - name: thelounge-config
+          {{- if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-config-pvc
+          {{- else }}
           hostPath:
             path: "{{ .Values.services.thelounge.config }}"
             type: Directory
+          {{- end }}
 {{- end }}

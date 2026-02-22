@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: changedetectionio
-  namespace: default
+  namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: changedetectionio
 spec:
@@ -39,10 +39,16 @@ spec:
           volumeMounts:
             - name: changedetectionio-config
               mountPath: /config
+              subPath: changedetectionio
 
       volumes:
         - name: changedetectionio-config
+          {{- if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-config-pvc
+          {{- else }}
           hostPath:
             path: "{{ .Values.services.changedetectionio.config }}"
             type: Directory
+          {{- end }}
 {{- end }}

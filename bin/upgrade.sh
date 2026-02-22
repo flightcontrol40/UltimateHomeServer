@@ -1,3 +1,6 @@
 #!/usr/bin/env bash
 
-helm upgrade -f values.yaml -f secrets.yaml  "$1" .
+RELEASE_NAME=${1:-media}
+NAMESPACE=${2:-media}
+
+helm upgrade -f values.yaml -f secrets.yaml  "$RELEASE_NAME" . --namespace "$NAMESPACE"

@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: sonarr
-  namespace: default
+  namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: sonarr
 spec:
@@ -19,6 +19,10 @@ spec:
       labels:
         app.kubernetes.io/name: sonarr
     spec:
+      {{- if and .Values.services.sonarr.localConfig .Values.services.sonarr.localConfig.enabled }}
+      nodeSelector:
+        kubernetes.io/hostname: {{ .Values.services.sonarr.localConfig.node }}
+      {{- end }}
       containers:
         - name: sonarr
           image: "{{ .Values.services.sonarr.image.repository }}:{{ .Values.services.sonarr.image.tag }}"
@@ -37,16 +41,33 @@ spec:
           volumeMounts:
             - name: sonarr-config
               mountPath: /config
+              {{- if not (and .Values.services.sonarr.localConfig .Values.services.sonarr.localConfig.enabled) }}
+              subPath: sonarr
+              {{- end }}
             - name: data
               mountPath: /data
 
       volumes:
         - name: sonarr-config
+          {{- if and .Values.services.sonarr.localConfig .Values.services.sonarr.localConfig.enabled }}
+          hostPath:
+            path: {{ .Values.services.sonarr.localConfig.hostPath }}
+            type: DirectoryOrCreate
+          {{- else if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-config-pvc
+          {{- else }}
           hostPath:
             path: "{{ .Values.services.sonarr.config }}"
             type: Directory
+          {{- end }}
         - name: data
+          {{- if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-data-pvc
+          {{- else }}
           hostPath:
             path: "{{ .Values.services.sonarr.data }}"
             type: Directory
+          {{- end }}
 {{- end }}

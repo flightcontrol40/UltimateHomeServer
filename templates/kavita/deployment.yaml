@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kavita
-  namespace: default
+  namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: kavita
 spec:
@@ -37,16 +37,27 @@ spec:
           volumeMounts:
             - name: kavita-config
               mountPath: /kavita/config
+              subPath: kavita
             - name: library
               mountPath: /library
 
       volumes:
         - name: kavita-config
+          {{- if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-config-pvc
+          {{- else }}
           hostPath:
             path: "{{ .Values.services.kavita.config }}"
             type: Directory
+          {{- end }}
         - name: library
+          {{- if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-library-pvc
+          {{- else }}
           hostPath:
             path: "{{ .Values.services.kavita.library }}"
             type: Directory
+          {{- end }}
 {{- end }}

@@ -1,0 +1,12 @@
+{{- if .Values.services.configarr.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: configarr
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: configarr
+data:
+  config.yml: |
+    {{- .Values.services.configarr.configYml | nindent 4 }}
+{{- end }}

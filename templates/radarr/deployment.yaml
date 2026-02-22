@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: radarr
-  namespace: default
+  namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: radarr
 spec:
@@ -19,6 +19,10 @@ spec:
       labels:
         app.kubernetes.io/name: radarr
     spec:
+      {{- if and .Values.services.radarr.localConfig .Values.services.radarr.localConfig.enabled }}
+      nodeSelector:
+        kubernetes.io/hostname: {{ .Values.services.radarr.localConfig.node }}
+      {{- end }}
       containers:
         - name: radarr
           image: "{{ .Values.services.radarr.image.repository }}:{{ .Values.services.radarr.image.tag }}"
@@ -37,16 +41,33 @@ spec:
           volumeMounts:
             - name: radarr-config
               mountPath: /config
+              {{- if not (and .Values.services.radarr.localConfig .Values.services.radarr.localConfig.enabled) }}
+              subPath: radarr
+              {{- end }}
             - name: data
               mountPath: /data
 
       volumes:
         - name: radarr-config
+          {{- if and .Values.services.radarr.localConfig .Values.services.radarr.localConfig.enabled }}
+          hostPath:
+            path: {{ .Values.services.radarr.localConfig.hostPath }}
+            type: DirectoryOrCreate
+          {{- else if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-config-pvc
+          {{- else }}
           hostPath:
             path: "{{ .Values.services.radarr.config }}"
             type: Directory
+          {{- end }}
         - name: data
+          {{- if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-data-pvc
+          {{- else }}
           hostPath:
             path: "{{ .Values.services.radarr.data }}"
             type: Directory
+          {{- end }}
 {{- end }}

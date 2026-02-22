@@ -1,0 +1,16 @@
+{{- if and .Values.services.plex.enabled .Values.services.plex.localStorage.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: plex-config-local-pvc
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: plex
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.services.plex.localStorage.storageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.services.plex.localStorage.size }}
+{{- end }}

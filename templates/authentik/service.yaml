@@ -1,0 +1,22 @@
+{{- if .Values.services.authentik.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: authentik
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: authentik
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.services.authentik.ports.http }}
+      targetPort: http
+      protocol: TCP
+      name: http
+    - port: {{ .Values.services.authentik.ports.https }}
+      targetPort: https
+      protocol: TCP
+      name: https
+  selector:
+    app.kubernetes.io/name: authentik-server
+{{- end }}

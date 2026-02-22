@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: sabnzbd
-  namespace: default
+  namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: sabnzbd
 spec:
@@ -37,15 +37,26 @@ spec:
           volumeMounts:
             - name: sabnzbd-config
               mountPath: /config
+              subPath: sabnzbd
             - name: data
               mountPath: /data
       volumes:
         - name: sabnzbd-config
+          {{- if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-config-pvc
+          {{- else }}
           hostPath:
             path: "{{ .Values.services.sabnzbd.config }}"
             type: Directory
+          {{- end }}
         - name: data
+          {{- if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-data-pvc
+          {{- else }}
           hostPath:
             path: "{{ .Values.services.sabnzbd.data }}"
             type: Directory
+          {{- end }}
 {{- end }}
