@@ -1,0 +1,28 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: homepage
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    gethomepage.dev/href: "https://homepage.{{ .Values.services.nginx.domain }}"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/description: "Homepage is a personal dashboard for all your web services."
+    gethomepage.dev/group: "Productivity"
+    gethomepage.dev/icon: "fas fa-home"
+    gethomepage.dev/name: "Homepage"
+    gethomepage.dev/pod-selector: ""
+spec:
+  parentRefs:
+    - name: traefik-gateway
+      namespace:  traefik
+  hostnames:
+    - "homepage.{{ .Values.services.nginx.domain }}"
+  rules:
+     - matches:
+        - path:
+            type: PathPrefix
+            value: /
+       backendRefs:
+        - name: homepage
+          namespace: {{ .Release.Namespace }}
+          port: {{ .Values.services.homepage.ports.http }}

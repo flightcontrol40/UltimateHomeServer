@@ -1,0 +1,27 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: radarr
+  annotations:
+    gethomepage.dev/href: "https://radarr.{{ .Values.services.nginx.domain }}"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/description: "radarr is a movie collection manager for Usenet and BitTorrent users."
+    gethomepage.dev/group: "Media"
+    gethomepage.dev/icon: "fas fa-video"
+    gethomepage.dev/name: "radarr"
+    gethomepage.dev/pod-selector: ""
+spec:
+  parentRefs:
+    - name: traefik-gateway
+      namespace:  traefik
+  hostnames:
+    - "radarr.{{ .Values.services.nginx.domain }}"
+  rules:
+     - matches:
+        - path:
+            type: PathPrefix
+            value: /
+       backendRefs:
+        - name: radarr
+          namespace: {{ .Release.Namespace }}
+          port: {{ .Values.services.radarr.ports.http }}

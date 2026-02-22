@@ -1,0 +1,59 @@
+{{- if .Values.services.debridClient.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: debrid-client
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: debrid-client
+spec:
+  revisionHistoryLimit: 3
+  replicas: {{ .Values.services.debridClient.replicaCount }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: debrid-client
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: debrid-client
+    spec:
+      containers:
+        - name: debrid-client
+          image: "{{ .Values.services.debridClient.image.repository }}:{{ .Values.services.debridClient.image.tag }}"
+          imagePullPolicy: {{ .Values.services.debridClient.image.pullPolicy }}
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: "{{ .Values.common.tz }}"
+          ports:
+            - name: http
+              containerPort: {{ .Values.services.debridClient.ports.http }}
+              protocol: TCP
+          volumeMounts:
+            - name: debrid-client-config
+              mountPath: /config
+            - name: downloads
+              mountPath: /data/downloads
+            - name: db
+              mountPath: /data/db
+            
+
+      volumes:
+        - name: debrid-client-config
+          hostPath:
+            path: "{{ .Values.services.debridClient.config }}"
+            type: Directory
+        - name: downloads
+          hostPath:
+            path: "{{ .Values.services.debridClient.data }}/downloads"
+            type: Directory
+        - name: db
+          hostPath:
+            path: "{{ .Values.services.debridClient.data }}/db"
+            type: Directory
+{{- end }}

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gluetun-secrets
+type: Opaque
+stringData:
+  wireguard_private_key: uOu71qsnAjMRQSE73K6SEdqlRl249l8zSbKY1sNRAH0=
+  wireguard_addresses: 10.70.180.184/32

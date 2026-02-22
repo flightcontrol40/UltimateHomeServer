@@ -1,0 +1,27 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: debrid-client
+  annotations:
+    gethomepage.dev/href: "https://debrid-client.{{ .Values.services.nginx.domain }}"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/description: "debrid-client is a self-hosted download manager for premium link generation and file downloading from various file hosting services."
+    gethomepage.dev/group: "Media"
+    gethomepage.dev/icon: "fas fa-video"
+    gethomepage.dev/name: "debrid-client"
+    gethomepage.dev/pod-selector: ""
+spec:
+  parentRefs:
+    - name: traefik-gateway
+      namespace:  traefik
+  hostnames:
+    - "debrid-client.{{ .Values.services.nginx.domain }}"
+  rules:
+     - matches:
+        - path:
+            type: PathPrefix
+            value: /
+       backendRefs:
+        - name: debrid-client
+          namespace: {{ .Release.Namespace }}
+          port: {{ .Values.services.debridClient.ports.http }}

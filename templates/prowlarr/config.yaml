@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: custom-indexers
+  namespace: {{ .Release.Namespace }}
+data:
+  torrentio.yml: |-
+    {{ .Files.Get "files/torrentio.yaml" | nindent 4 }}

@@ -1,0 +1,27 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: prowlarr
+  annotations:
+    gethomepage.dev/href: "https://prowlarr.{{ .Values.services.nginx.domain }}"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/description: "prowlarr is a torrent and usenet indexer manager."
+    gethomepage.dev/group: "Media"
+    gethomepage.dev/icon: "fas fa-video"
+    gethomepage.dev/name: "prowlarr"
+    gethomepage.dev/pod-selector: ""
+spec:
+  parentRefs:
+    - name: traefik-gateway
+      namespace:  traefik
+  hostnames:
+    - "prowlarr.{{ .Values.services.nginx.domain }}"
+  rules:
+     - matches:
+        - path:
+            type: PathPrefix
+            value: /
+       backendRefs:
+        - name: prowlarr
+          namespace: {{ .Release.Namespace }}
+          port: {{ .Values.services.prowlarr.ports.http }}
