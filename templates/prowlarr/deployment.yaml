@@ -19,6 +19,25 @@ spec:
       labels:
         app.kubernetes.io/name: prowlarr
     spec:
+      initContainers:
+        - name: install-custom-indexers
+          image: alpine/git:latest
+          command:
+            - sh
+            - -c
+            - |
+              DEST="/config/Definitions/Custom"
+              mkdir -p "$DEST"
+              TMP=$(mktemp -d)
+              git clone --depth 1 https://github.com/dreulavelle/Prowlarr-Indexers.git "$TMP"
+              cp -v "$TMP"/Custom/*.yml "$DEST/"
+              rm -rf "$TMP"
+              echo "Custom indexers installed:"
+              ls -la "$DEST/"
+          volumeMounts:
+            - name: prowlarr-config
+              mountPath: /config
+              subPath: prowlarr
       containers:
         - name: prowlarr
           image: "{{ .Values.services.prowlarr.image.repository }}:{{ .Values.services.prowlarr.image.tag }}"

@@ -1,0 +1,62 @@
+{{- if .Values.services.debridClient.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: debrid-client
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: debrid-client
+spec:
+  revisionHistoryLimit: 3
+  replicas: {{ .Values.services.debridClient.replicaCount }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: debrid-client
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: debrid-client
+    spec:
+      containers:
+        - name: debrid-client
+          image: "{{ .Values.services.debridClient.image.repository }}:{{ .Values.services.debridClient.image.tag }}"
+          imagePullPolicy: {{ .Values.services.debridClient.image.pullPolicy }}
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: "{{ .Values.common.tz }}"
+          ports:
+            - name: http
+              containerPort: {{ .Values.services.debridClient.ports.http }}
+              protocol: TCP
+          volumeMounts:
+            - name: debrid-client-config
+              mountPath: /data/db
+              subPath: debrid-client
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: debrid-client-config
+          {{- if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-config-pvc
+          {{- else }}
+          hostPath:
+            path: "{{ .Values.services.debridClient.config }}"
+            type: Directory
+          {{- end }}
+        - name: data
+          {{- if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-data-pvc
+          {{- else }}
+          hostPath:
+            path: "{{ .Values.services.debridClient.data }}"
+            type: Directory
+          {{- end }}
+{{- end }}

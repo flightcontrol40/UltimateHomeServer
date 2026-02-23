@@ -45,6 +45,8 @@ spec:
               {{- end }}
             - name: library
               mountPath: /library
+            - name: data
+              mountPath: /data
       volumes:
         - name: plex-config
           {{- if .Values.services.plex.localStorage.enabled }}
@@ -66,5 +68,12 @@ spec:
           hostPath:
             path: "{{ .Values.services.plex.library }}"
             type: Directory
+          {{- end }}
+        - name: data
+          {{- if .Values.storage.nfs.enabled }}
+          persistentVolumeClaim:
+            claimName: media-data-pvc
+          {{- else }}
+          emptyDir: {}
           {{- end }}
 {{- end }}
